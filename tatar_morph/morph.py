@@ -1,48 +1,36 @@
-from typing import Any
-from collections.abc import Generator, Iterable
+from collections.abc import Iterable, Iterator
 
 from tatar_morph.engines.base import MorphologyEngine
-from tatar_morph.lemma.interface import ILemmaParser
+from tatar_morph.decoder.interface import IDataDecoder
 from tatar_morph.models import Analysis
-from tatar_morph.tags.interface import ITagsMapper
 
 
-class TatarMorph:
+class TatarMorph[EngResultT]:
     def __init__(
         self,
-        engine: MorphologyEngine,
-        tags_parser: ITagsMapper,
-        lemma_parser: ILemmaParser,
+        engine: MorphologyEngine[EngResultT],
+        data_decoder: IDataDecoder[EngResultT],
     ) -> None:
         self._engine = engine
-        self._tags_parser = tags_parser
-        self._lemma_parser = lemma_parser
+        self._data_parser = data_decoder
 
-    def parse(self, word: str) -> Generator[Analysis, Any, None]:
+    def parse(self, word: str) -> Iterator[Analysis]:
         word = self._normalize_word(word)
         raw_analysis = self._engine.analyze(word)
-        for suggest, weight in raw_analysis:
-            pos, features, raw_tags = self._tags_parser.parse(suggest)
-            lemma = self._lemma_parser.lemmatize(suggest)
-            yield Analysis(
-                word=word,
-                pos=pos,
-                weight=weight,
-                features=features,
-                tags=raw_tags,
-                lemma=lemma,
-            )
+        for raw_data in raw_analysis:
+            yield self._data_parser.decode(word, raw_data)
 
     def lemmatize(self, word: str) -> list[str]:
         word = self._normalize_word(word)
-        raw_analysis = (x[0] for x in self._engine.analyze(word))
-        return [*dict.fromkeys(map(self._lemma_parser.lemmatize, raw_analysis))]
+        return [
+            *dict.fromkeys(map(self._data_parser.lemmatize, self._engine.analyze(word)))
+        ]
 
-    def generate(
-        self, lemma: str, tags: Iterable[str]
-    ) -> Generator[tuple[str, float], Any, None]:
+    def generate(self, lemma: str, tags: Iterable[str]) -> Iterator[tuple[str, float]]:
         lemma = self._normalize_word(lemma)
-        yield from self._engine.generate(self._tags_parser.resolve(lemma, tags))
+        raw_datas = self._engine.generate(self._data_parser.generate(lemma, tags))
+        for data in self._data_parser.parse_list(raw_datas):
+            yield data.word, data.weight
 
     def _normalize_word(self, word: str) -> str:
         return word.lower().strip()

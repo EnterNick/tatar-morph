@@ -1,10 +1,9 @@
 from os import getenv
 from pathlib import Path
 
+from tatar_morph.decoder.hfst.data import HFSTDataDecoder
 from tatar_morph.engines.hfst_engine import HfstEngine
-from tatar_morph.lemma import HFSTLemmatizer
 from tatar_morph.morph import TatarMorph
-from tatar_morph.tags import HFSTTagsParser
 
 
 def parse_env_path(name: str) -> Path:
@@ -16,7 +15,7 @@ def parse_env_path(name: str) -> Path:
 
 def build_default_hfst_morph(
     automorf_path: Path | None = None, autogen_path: Path | None = None
-) -> TatarMorph:
+) -> TatarMorph[tuple[str, float]]:
     if automorf_path is None:
         automorf_path = parse_env_path("TATAR_AUTOMORF_PATH")
     if autogen_path is None:
@@ -27,10 +26,7 @@ def build_default_hfst_morph(
         generator_path=autogen_path,
     )
 
-    tags_mapper = HFSTTagsParser()
-    lemma_parser = HFSTLemmatizer()
     return TatarMorph(
-        tags_parser=tags_mapper,
-        lemma_parser=lemma_parser,
+        data_decoder=HFSTDataDecoder(),
         engine=engine,
     )

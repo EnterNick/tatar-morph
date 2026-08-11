@@ -1,24 +1,27 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from tatar_morph.types import (
-    PartOfSpeech,
     AnyType,
 )
 
 
+@dataclass(slots=True, frozen=True, init=False)
 class ParsingResults:
-    def __init__(self, features: list[AnyType]) -> None:
-        self._features = features
+    _features: tuple[AnyType, ...]
 
-    def get[FeatureT: AnyType](self, feature_type: type[FeatureT]) -> FeatureT | None:
-        return next(
-            filter(lambda feature: type(feature) is feature_type, self._features), None
-        )
+    def __init__(self, features: Iterable[AnyType]) -> None:
+        object.__setattr__(self, "_features", tuple(features))
 
-    def list(self) -> list[AnyType]:
-        return list(self._features)
+    def get_all[FeatureT: AnyType](
+        self, feature_type: type[FeatureT]
+    ) -> tuple[FeatureT, ...]:
+        return tuple(feature for feature in self._features if type(feature) is feature_type)
 
-    def __repr__(self):
+    def all(self) -> tuple[AnyType, ...]:
+        return self._features
+
+    def __repr__(self) -> str:
         return f"ParsingResults{self._features!s}"
 
 
@@ -26,7 +29,6 @@ class ParsingResults:
 class Analysis:
     word: str
     lemma: str
-    pos: PartOfSpeech
     features: ParsingResults
     weight: float
-    tags: list[str]
+    raw_tags: tuple[str, ...]
