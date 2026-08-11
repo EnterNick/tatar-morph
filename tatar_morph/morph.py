@@ -5,7 +5,6 @@ from tatar_morph.engines.base import MorphologyEngine
 from tatar_morph.lemma.interface import ILemmaParser
 from tatar_morph.models import Analysis
 from tatar_morph.tags.interface import ITagsMapper
-from tatar_morph.types import AnyType
 
 
 class TatarMorph:

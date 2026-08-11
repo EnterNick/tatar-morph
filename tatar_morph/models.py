@@ -12,7 +12,7 @@ class ParsingResults:
 
     def get[FeatureT: AnyType](self, feature_type: type[FeatureT]) -> FeatureT | None:
         return next(
-            filter(lambda feature: type(feature_type) is feature_type, self._features), None
+            filter(lambda feature: type(feature) is feature_type, self._features), None
         )
 
     def list(self) -> list[AnyType]:

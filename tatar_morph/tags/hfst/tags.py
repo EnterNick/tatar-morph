@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 from tatar_morph.models import ParsingResults
 from tatar_morph.tags.hfst.known import KNOWN_SYMBOLS_MAPPER
-from tatar_morph.types import PartOfSpeech, AnyType
+from tatar_morph.types import PartOfSpeech
 
 KNOWN_SYMBOLS: frozenset[str] = frozenset(KNOWN_SYMBOLS_MAPPER.keys())
 TAG_RE = re.compile(r"<([^<>]+)>")
@@ -11,7 +11,8 @@ TAG_RE = re.compile(r"<([^<>]+)>")
 
 class HFSTTagsParser:
     def parse(self, word: str) -> tuple[PartOfSpeech, ParsingResults, list[str]]:
-        pos, *raw_tags = self._parse_tags(word)
+        raw_tags = self._parse_tags(word)
+        pos = raw_tags[0]
         parsed_results = list(filter(bool, map(KNOWN_SYMBOLS_MAPPER.get, raw_tags)))
         return (
             PartOfSpeech(KNOWN_SYMBOLS_MAPPER[pos]),

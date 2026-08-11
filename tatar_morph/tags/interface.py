@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from tatar_morph.models import ParsingResults
-from tatar_morph.types import PartOfSpeech, AnyType
+from tatar_morph.types import PartOfSpeech
 
 
 class ITagsMapper:

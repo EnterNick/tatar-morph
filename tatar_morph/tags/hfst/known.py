@@ -1,4 +1,3 @@
-
 from tatar_morph.types import (
     Tense,
     Case,
