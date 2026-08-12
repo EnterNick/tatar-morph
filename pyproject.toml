@@ -1,11 +1,46 @@
+[build-system]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "tatar-morph"
-version = "0.1.0"
-description = "Add your description here"
+dynamic = ["version"]
+description = "Морфологический анализатор и генератор для татарского языка"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "hfst>=3.16.0.1",
 ]
+keywords = [
+    "tatar",
+    "morphology",
+    "nlp",
+    "hfst",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: Tatar",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[project.urls]
+Homepage = "https://github.com/EnterNick/tatar-morph"
+Repository = "https://github.com/EnterNick/tatar-morph"
+Issues = "https://github.com/EnterNick/tatar-morph/issues"
+Releases = "https://github.com/EnterNick/tatar-morph/releases"
+
+[tool.setuptools.packages.find]
+include = ["tatar_morph*"]
+
+[tool.setuptools_scm]
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  release:
+    name: Publish to PyPI and create GitHub release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/tatar-morph
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Check out the tagged revision
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: python -m pip install --upgrade build twine
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Check distributions
+        run: python -m twine check dist/*
+
+      - name: Verify the built version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from email.parser import BytesParser
+          from email.policy import default
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          from packaging.version import Version
+
+          wheels = list(Path("dist").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one wheel, found {len(wheels)}")
+
+          with ZipFile(wheels[0]) as wheel:
+              metadata_path = next(
+                  name for name in wheel.namelist() if name.endswith(".dist-info/METADATA")
+              )
+              metadata = BytesParser(policy=default).parsebytes(
+                  wheel.read(metadata_path)
+              )
+
+          tag_version = Version(os.environ["RELEASE_TAG"].removeprefix("v"))
+          built_version = Version(metadata["Version"])
+          if built_version != tag_version:
+              raise SystemExit(
+                  f"Built version {built_version} does not match tag version {tag_version}"
+              )
+          PY
+
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          dist/*
+          --verify-tag
+          --generate-notes
+          --title "${GITHUB_REF_NAME}"

@@ -1,0 +1,4 @@
+prune .github
+prune .idea
+exclude .gitignore
+exclude uv.lock
