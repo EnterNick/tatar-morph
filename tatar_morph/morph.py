@@ -2,7 +2,8 @@ from collections.abc import Callable, Iterable, Iterator
 
 from tatar_morph.decoder.interface import IDataDecoder
 from tatar_morph.engines.base import MorphologyEngine
-from tatar_morph.models import Analysis
+from tatar_morph.models import Analysis, GenerationResult
+from tatar_morph.types import AnyType
 
 
 def normalize_word(word: str) -> str:
@@ -32,9 +33,10 @@ class TatarMorph[AnalyzeResultT, GenerateQueryT, GenerateResultT]:
             *dict.fromkeys(map(self._data_decoder.lemmatize, self._engine.analyze(word)))
         ]
 
-    def generate(self, lemma: str, tags: Iterable[str]) -> Iterator[tuple[str, float]]:
+    def generate(
+        self, lemma: str, features: Iterable[AnyType]
+    ) -> Iterator[GenerationResult]:
         lemma = self._normalizer(lemma)
-        query = self._data_decoder.encode_generation(lemma, tags)
+        query = self._data_decoder.encode_generation(lemma, features)
         for raw_data in self._engine.generate(query):
-            data = self._data_decoder.decode_generation(raw_data)
-            yield data.word, data.weight
+            yield self._data_decoder.decode_generation(raw_data)

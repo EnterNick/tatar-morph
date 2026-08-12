@@ -2,7 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from tatar_morph import HFSTMorph, TransducerLoadError, build_default_hfst_morph
+from tatar_morph import (
+    GenerationResult,
+    HFSTMorph,
+    TransducerLoadError,
+    build_default_hfst_morph,
+)
 from tatar_morph.engines.hfst_engine import HfstEngine
 from tatar_morph.types import TechnicalTag
 
@@ -27,7 +32,9 @@ def test_simple_analysis_tags_can_be_generated() -> None:
     morph = build_morph()
     analysis = next(item for item in morph.parse("өй") if item.raw_tags == ("n", "nom"))
 
-    assert list(morph.generate(analysis.lemma, analysis.raw_tags)) == [("өй", 0.0)]
+    assert list(morph.generate(analysis.lemma, analysis.features.all())) == [
+        GenerationResult(word="өй", weight=0.0)
+    ]
 
 
 def test_missing_transducer_error_contains_role_and_path(tmp_path: Path) -> None:

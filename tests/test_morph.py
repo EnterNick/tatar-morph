@@ -4,7 +4,7 @@ import pytest
 
 from tatar_morph.models import Analysis, GenerationResult, ParsingResults
 from tatar_morph.morph import TatarMorph
-from tatar_morph.types import PartOfSpeech
+from tatar_morph.types import AnyType, PartOfSpeech
 
 type FakeRawResult = tuple[str, float]
 type FakeMorph = TatarMorph[FakeRawResult, str, FakeRawResult]
@@ -33,11 +33,13 @@ class FakeDataDecoder:
     ) -> tuple[ParsingResults, tuple[str, ...]]:
         return ParsingResults([PartOfSpeech.NOUN]), ("n", "nom")
 
-    def encode_generation(self, lemma: str, tags: Iterable[str]) -> str:
-        tags = tuple(tags)
-        if not tags:
-            raise ValueError("At least one morphology tag is required")
-        return f"{lemma}<{'><'.join(tags)}>"
+    def encode_generation(
+        self, lemma: str, features: Iterable[AnyType]
+    ) -> str:
+        features = tuple(features)
+        if not features:
+            raise ValueError("At least one morphology feature is required")
+        return f"{lemma}<{'><'.join(feature.value for feature in features)}>"
 
     def decode(self, word: str, raw_data: tuple[str, float]) -> Analysis:
         return Analysis(
@@ -77,8 +79,10 @@ def test_generate_normalizes_lemma_and_preserves_results(
 ) -> None:
     service, engine = morph
 
-    assert list(service.generate("  ӨЙ  ", ("n", "nom"))) == [("Өй", 0.5)]
-    assert engine.generated_forms == ["өй<n><nom>"]
+    assert list(service.generate("  ӨЙ  ", (PartOfSpeech.NOUN,))) == [
+        GenerationResult(word="Өй", weight=0.5)
+    ]
+    assert engine.generated_forms == ["өй<noun>"]
 
 
 def test_custom_normalizer_is_used() -> None:

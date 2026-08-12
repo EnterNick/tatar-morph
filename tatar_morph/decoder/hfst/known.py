@@ -168,3 +168,19 @@ KNOWN_SYMBOLS_MAPPER: dict[str, AnyType] = {
     "equ": Case.EQUATIVE,
     "aor": Tense.AORIST,
 }
+
+
+def _build_feature_mapper() -> dict[tuple[type[AnyType], AnyType], str]:
+    mapper: dict[tuple[type[AnyType], AnyType], str] = {}
+    for symbol, feature in KNOWN_SYMBOLS_MAPPER.items():
+        key = (type(feature), feature)
+        if previous_symbol := mapper.get(key):
+            raise RuntimeError(
+                f"Feature {feature!r} has ambiguous HFST symbols: "
+                f"{previous_symbol!r} and {symbol!r}"
+            )
+        mapper[key] = symbol
+    return mapper
+
+
+FEATURE_TO_KNOWN_SYMBOL = _build_feature_mapper()

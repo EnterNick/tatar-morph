@@ -1,8 +1,13 @@
 from collections.abc import Iterable
 import re
 
-from tatar_morph.decoder.hfst.known import KNOWN_SYMBOLS_MAPPER
+from tatar_morph.decoder.hfst.known import (
+    FEATURE_TO_KNOWN_SYMBOL,
+    KNOWN_SYMBOLS_MAPPER,
+)
+from tatar_morph.exceptions import UnsupportedGenerationFeatureError
 from tatar_morph.models import Analysis, GenerationResult, ParsingResults
+from tatar_morph.types import AnyType
 
 TAG_RE = re.compile(r"<([^<>]+)>")
 
@@ -17,10 +22,11 @@ class HFSTDataDecoder:
             feature for feature in features if feature is not None
         ), raw_tags
 
-    def encode_generation(self, lemma: str, tags: Iterable[str]) -> str:
-        tags = tuple(tags)
-        if not tags:
-            raise ValueError("At least one morphology tag is required")
+    def encode_generation(self, lemma: str, features: Iterable[AnyType]) -> str:
+        features = tuple(features)
+        if not features:
+            raise ValueError("At least one morphology feature is required")
+        tags = tuple(self._encode_feature(feature) for feature in features)
         raw_tags = "><".join(tags)
         return f"{lemma}<{raw_tags}>"
 
@@ -43,3 +49,12 @@ class HFSTDataDecoder:
 
     def _parse_tags(self, string: str) -> tuple[str, ...]:
         return tuple(TAG_RE.findall(string))
+
+    @staticmethod
+    def _encode_feature(feature: AnyType) -> str:
+        try:
+            return FEATURE_TO_KNOWN_SYMBOL[(type(feature), feature)]
+        except KeyError as error:
+            raise UnsupportedGenerationFeatureError(
+                f"HFST cannot encode morphology feature: {feature!r}"
+            ) from error
