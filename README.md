@@ -1,38 +1,38 @@
 # tatar-morph
 
-`tatar-morph` — библиотека на Python для морфологического анализа,
-лемматизации и генерации словоформ татарского языка. Для работы с
-HFST-трансдьюсерами библиотека использует пакет [`hfst`](https://pypi.org/project/hfst/).
+`tatar-morph` is a Python library for morphological analysis, lemmatization,
+and word-form generation for the Tatar language. It uses the
+[`hfst`](https://pypi.org/project/hfst/) package to work with HFST transducers.
 
-> Проект находится на ранней стадии разработки. Публичный API может меняться
-> между версиями.
+> The project is at an early stage of development. The public API may change
+> between releases.
 
-## Возможности
+## Features
 
-- разбор слова на лемму и морфологические признаки;
-- получение списка возможных лемм;
-- генерация словоформ по лемме и набору признаков;
-- типизированное представление частей речи, падежей, числа, времени и других
-  грамматических категорий;
-- работа с готовыми анализирующим и генерирующим HFST-трансдьюсерами.
+- Parse a word into its lemma and morphological features.
+- Return all possible lemmas for a word.
+- Generate word forms from a lemma and a set of features.
+- Represent parts of speech, cases, numbers, tenses, and other grammatical
+  categories with typed values.
+- Work with existing HFST analyzer and generator transducers.
 
-## Требования
+## Requirements
 
-- Python 3.12 или новее;
-- HFST-трансдьюсер для анализа татарского языка;
-- HFST-трансдьюсер для генерации словоформ.
+- Python 3.12 or newer.
+- An HFST transducer for analyzing Tatar words.
+- An HFST transducer for generating Tatar word forms.
 
-Трансдьюсеры не входят в пакет и должны быть получены отдельно.
+The transducers are not bundled with the package and must be obtained separately.
 
-## Установка
+## Installation
 
 ```bash
 python -m pip install tatar-morph
 ```
 
-## Быстрый старт
+## Quick start
 
-Пути к трансдьюсерам можно передать напрямую:
+You can pass the transducer paths directly:
 
 ```python
 from pathlib import Path
@@ -40,8 +40,8 @@ from pathlib import Path
 from tatar_morph import build_default_hfst_morph
 
 morph = build_default_hfst_morph(
-    automorf_path=Path("/путь/к/tat.automorf.hfst"),
-    autogen_path=Path("/путь/к/tat.autogen.hfst"),
+    automorf_path=Path("/path/to/tat.automorf.hfst"),
+    autogen_path=Path("/path/to/tat.autogen.hfst"),
 )
 
 for analysis in morph.parse("өй"):
@@ -52,12 +52,12 @@ for analysis in morph.parse("өй"):
 print(morph.lemmatize("өйләр"))
 ```
 
-Или задать их переменными окружения `TATAR_AUTOMORF_PATH` и
-`TATAR_AUTOGEN_PATH`:
+Alternatively, set the `TATAR_AUTOMORF_PATH` and `TATAR_AUTOGEN_PATH`
+environment variables:
 
 ```bash
-export TATAR_AUTOMORF_PATH=/путь/к/tat.automorf.hfst
-export TATAR_AUTOGEN_PATH=/путь/к/tat.autogen.hfst
+export TATAR_AUTOMORF_PATH=/path/to/tat.automorf.hfst
+export TATAR_AUTOGEN_PATH=/path/to/tat.autogen.hfst
 ```
 
 ```python
@@ -67,7 +67,7 @@ morph = build_default_hfst_morph()
 analyses = list(morph.parse("бар"))
 ```
 
-Для генерации можно использовать признаки, полученные при разборе:
+Features returned by the analyzer can be used to generate word forms:
 
 ```python
 analysis = next(morph.parse("өй"))
@@ -77,9 +77,9 @@ for form in forms:
     print(form.word, form.weight)
 ```
 
-## Разработка
+## Development
 
-Установите зависимости и запустите проверки:
+Install the dependencies and run the checks:
 
 ```bash
 uv sync --dev
@@ -88,22 +88,23 @@ uv run ruff check .
 uv run mypy tatar_morph
 ```
 
-## Выпуск новой версии
+## Releasing a new version
 
-Версия пакета определяется автоматически из Git-тега с помощью
-`setuptools-scm`. Создайте тег с префиксом `v` и отправьте его в GitHub:
+The package version is derived automatically from the Git tag by
+`setuptools-scm`. Create a tag prefixed with `v` and push it to GitHub:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-GitHub Actions получит версию из тега, проверит версию собранного wheel,
-опубликует пакет в PyPI и создаст GitHub Release. Для публикации необходимо
-однократно настроить Trusted Publisher проекта `tatar-morph` в PyPI для
-репозитория `EnterNick/tatar-morph`, workflow `release.yml` и окружения `pypi`.
+GitHub Actions derives the version from the tag, verifies the version in the
+built wheel, publishes the package to PyPI, and creates a GitHub Release.
+Before the first release, configure a Trusted Publisher for the `tatar-morph`
+project on PyPI with the `EnterNick/tatar-morph` repository, the `release.yml`
+workflow, and the `pypi` environment.
 
-## Лицензия
+## License
 
-Проект распространяется на условиях GNU General Public License версии 3.
-Полный текст лицензии находится в файле [`LICENSE`](LICENSE).
+This project is distributed under the GNU General Public License version 3.
+See [`LICENSE`](LICENSE) for the full license text.

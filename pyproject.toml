@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tatar-morph"
 dynamic = ["version"]
-description = "Морфологический анализатор и генератор для татарского языка"
+description = "A morphological analyzer and generator for the Tatar language"
 readme = "README.md"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
