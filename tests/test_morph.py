@@ -2,10 +2,12 @@ from collections.abc import Iterable
 
 import pytest
 
-from tatar_morph.decoder.interface import EngineData
-from tatar_morph.models import ParsingResults, Analysis
+from tatar_morph.models import Analysis, GenerationResult, ParsingResults
 from tatar_morph.morph import TatarMorph
 from tatar_morph.types import PartOfSpeech
+
+type FakeRawResult = tuple[str, float]
+type FakeMorph = TatarMorph[FakeRawResult, str, FakeRawResult]
 
 
 class FakeEngine:
@@ -22,16 +24,7 @@ class FakeEngine:
         return [("Өй", 0.5)]
 
 
-class FakeDataParser:
-    def parse(self, data: tuple[str, float]) -> EngineData:
-        return EngineData(
-            word=data[0],
-            weight=data[1],
-        )
-
-    def parse_list(self, data: Iterable[tuple[str, float]]) -> list[EngineData]:
-        return list(map(self.parse, data))
-
+class FakeDataDecoder:
     def lemmatize(self, data: tuple[str, float]) -> str:
         return data[0].split("<", maxsplit=1)[0]
 
@@ -40,7 +33,7 @@ class FakeDataParser:
     ) -> tuple[ParsingResults, tuple[str, ...]]:
         return ParsingResults([PartOfSpeech.NOUN]), ("n", "nom")
 
-    def generate(self, lemma: str, tags: Iterable[str]) -> str:
+    def encode_generation(self, lemma: str, tags: Iterable[str]) -> str:
         tags = tuple(tags)
         if not tags:
             raise ValueError("At least one morphology tag is required")
@@ -51,19 +44,22 @@ class FakeDataParser:
             word=word,
             lemma=self.lemmatize(raw_data),
             weight=raw_data[1],
-            raw_tags=("n",),
+            raw_tags=("n", "nom"),
             features=ParsingResults([PartOfSpeech.NOUN]),
         )
 
+    def decode_generation(self, data: tuple[str, float]) -> GenerationResult:
+        return GenerationResult(word=data[0], weight=data[1])
+
 
 @pytest.fixture
-def morph() -> tuple[TatarMorph[tuple[str, float]], FakeEngine]:
+def morph() -> tuple[FakeMorph, FakeEngine]:
     engine = FakeEngine()
-    return TatarMorph(engine, FakeDataParser()), engine
+    return TatarMorph(engine, FakeDataDecoder()), engine
 
 
 def test_parse_normalizes_word_and_preserves_weight(
-    morph: tuple[TatarMorph[tuple[str, float]], FakeEngine],
+    morph: tuple[FakeMorph, FakeEngine],
 ) -> None:
     service, engine = morph
 
@@ -77,9 +73,22 @@ def test_parse_normalizes_word_and_preserves_weight(
 
 
 def test_generate_normalizes_lemma_and_preserves_results(
-    morph: tuple[TatarMorph[tuple[str, float]], FakeEngine],
+    morph: tuple[FakeMorph, FakeEngine],
 ) -> None:
     service, engine = morph
 
     assert list(service.generate("  ӨЙ  ", ("n", "nom"))) == [("Өй", 0.5)]
     assert engine.generated_forms == ["өй<n><nom>"]
+
+
+def test_custom_normalizer_is_used() -> None:
+    engine = FakeEngine()
+    service = TatarMorph(
+        engine,
+        FakeDataDecoder(),
+        normalizer=lambda word: word.strip(),
+    )
+
+    next(service.parse("  ӨЙ  "))
+
+    assert engine.analyzed_words == ["ӨЙ"]

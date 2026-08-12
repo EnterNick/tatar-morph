@@ -1,34 +1,34 @@
 import pytest
 
-from tatar_morph.tags.hfst.tags import HFSTTagsParser
+from tatar_morph.decoder.hfst.data import HFSTDataDecoder
 from tatar_morph.types import Case, PartOfSpeech, TechnicalTag
 
 
 @pytest.fixture
-def parser() -> HFSTTagsParser:
-    return HFSTTagsParser()
+def decoder() -> HFSTDataDecoder:
+    return HFSTDataDecoder()
 
 
 def test_parse_extracts_pos_without_duplicating_it_in_features(
-    parser: HFSTTagsParser,
+    decoder: HFSTDataDecoder,
 ) -> None:
-    features, tags = parser.parse(("өй<n><nom>", 0.0))
+    features, tags = decoder.parse_features(("өй<n><nom>", 0.0))
 
-    assert features.list() == [PartOfSpeech.NOUN, Case.NOMINATIVE]
+    assert features.all() == (PartOfSpeech.NOUN, Case.NOMINATIVE)
     assert tags == ("n", "nom")
 
 
 def test_parse_preserves_secondary_part_of_speech_as_feature(
-    parser: HFSTTagsParser,
+    decoder: HFSTDataDecoder,
 ) -> None:
-    features, _ = parser.parse(("өй<n><nom>+и<cop>", 0.0))
+    features, _ = decoder.parse_features(("өй<n><nom>+и<cop>", 0.0))
 
     assert features.get_all(PartOfSpeech) == (PartOfSpeech.NOUN, PartOfSpeech.COPULA)
 
 
-def test_parse_handles_analysis_without_pos(parser: HFSTTagsParser) -> None:
-    features, tags = parser.parse(("бар<phrase>", 0.0))
-    assert features.get_all(TechnicalTag) is TechnicalTag.PHRASE
+def test_parse_handles_analysis_without_pos(decoder: HFSTDataDecoder) -> None:
+    features, tags = decoder.parse_features(("бар<phrase>", 0.0))
+    assert features.get_all(TechnicalTag) == (TechnicalTag.PHRASE,)
     assert tags == ("phrase",)
 
 
@@ -37,19 +37,21 @@ def test_parse_handles_analysis_without_pos(parser: HFSTTagsParser) -> None:
     [("бар", ()), ("бар<future_tag>", ("future_tag",))],
 )
 def test_parse_handles_missing_or_unknown_tags(
-    parser: HFSTTagsParser,
+    decoder: HFSTDataDecoder,
     lexical_form: str,
     expected_tags: tuple[str, ...],
 ) -> None:
-    features, tags = parser.parse((lexical_form, 0.0))
-    assert features.list() == []
+    features, tags = decoder.parse_features((lexical_form, 0.0))
+    assert features.all() == ()
     assert tags == expected_tags
 
 
-def test_resolve_builds_simple_lexical_form(parser: HFSTTagsParser) -> None:
-    assert parser.resolve("өй", iter(("n", "nom"))) == "өй<n><nom>"
+def test_encode_generation_builds_simple_lexical_form(
+    decoder: HFSTDataDecoder,
+) -> None:
+    assert decoder.encode_generation("өй", iter(("n", "nom"))) == "өй<n><nom>"
 
 
-def test_resolve_rejects_empty_tags(parser: HFSTTagsParser) -> None:
+def test_encode_generation_rejects_empty_tags(decoder: HFSTDataDecoder) -> None:
     with pytest.raises(ValueError, match="At least one morphology tag"):
-        parser.resolve("өй", [])
+        decoder.encode_generation("өй", [])

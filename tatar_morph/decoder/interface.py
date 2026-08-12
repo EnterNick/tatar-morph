@@ -1,28 +1,23 @@
-from dataclasses import dataclass
-from typing import Protocol
 from collections.abc import Iterable
+from typing import Protocol
 
-from tatar_morph.models import ParsingResults, Analysis
-
-
-@dataclass(slots=True)
-class EngineData:
-    word: str
-    weight: float
+from tatar_morph.models import Analysis, GenerationResult, ParsingResults
 
 
-class IDataDecoder[EngResultT](Protocol):
-    def parse_list(self, data: Iterable[EngResultT]) -> Iterable[EngineData]:
+class IDataDecoder[AnalyzeResultT, GenerateQueryT, GenerateResultT](Protocol):
+    def lemmatize(self, data: AnalyzeResultT) -> str:
         pass
 
-    def lemmatize(self, data: EngResultT) -> str:
+    def parse_features(
+        self, data: AnalyzeResultT
+    ) -> tuple[ParsingResults, tuple[str, ...]]:
         pass
 
-    def parse_features(self, data: EngResultT) -> tuple[ParsingResults, tuple[str, ...]]:
+    def encode_generation(self, lemma: str, tags: Iterable[str]) -> GenerateQueryT:
         pass
 
-    def generate(self, lemma: str, tags: Iterable[str]) -> str:
+    def decode(self, word: str, data: AnalyzeResultT) -> Analysis:
         pass
 
-    def decode(self, word: str, data: EngResultT) -> Analysis:
+    def decode_generation(self, data: GenerateResultT) -> GenerationResult:
         pass

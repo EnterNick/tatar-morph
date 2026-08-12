@@ -32,3 +32,9 @@ class Analysis:
     features: ParsingResults
     weight: float
     raw_tags: tuple[str, ...]
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class GenerationResult:
+    word: str
+    weight: float

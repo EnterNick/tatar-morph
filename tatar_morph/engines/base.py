@@ -1,10 +1,8 @@
-from typing import Protocol
 from collections.abc import Iterable
+from typing import Protocol
 
 
-class MorphologyEngine[EngResultT](Protocol):
-    def analyze(self, word: str) -> Iterable[EngResultT]:
-        pass
+class MorphologyEngine[AnalyzeResultT, GenerateQueryT, GenerateResultT](Protocol):
+    def analyze(self, word: str) -> Iterable[AnalyzeResultT]: ...
 
-    def generate(self, lexical_form: str) -> Iterable[EngResultT]:
-        pass
+    def generate(self, query: GenerateQueryT) -> Iterable[GenerateResultT]: ...

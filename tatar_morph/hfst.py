@@ -5,6 +5,9 @@ from tatar_morph.decoder.hfst.data import HFSTDataDecoder
 from tatar_morph.engines.hfst_engine import HfstEngine
 from tatar_morph.morph import TatarMorph
 
+type HFSTRawResult = tuple[str, float]
+type HFSTMorph = TatarMorph[HFSTRawResult, str, HFSTRawResult]
+
 
 def parse_env_path(name: str) -> Path:
     env_path = getenv(name)
@@ -15,18 +18,19 @@ def parse_env_path(name: str) -> Path:
 
 def build_default_hfst_morph(
     automorf_path: Path | None = None, autogen_path: Path | None = None
-) -> TatarMorph[tuple[str, float]]:
+) -> HFSTMorph:
     if automorf_path is None:
         automorf_path = parse_env_path("TATAR_AUTOMORF_PATH")
     if autogen_path is None:
         autogen_path = parse_env_path("TATAR_AUTOGEN_PATH")
 
-    engine = HfstEngine(
-        analyzer_path=automorf_path,
-        generator_path=autogen_path,
+    return TatarMorph(
+        engine=HfstEngine(
+            analyzer_path=automorf_path,
+            generator_path=autogen_path,
+        ),
+        data_decoder=HFSTDataDecoder(),
     )
 
-    return TatarMorph(
-        data_decoder=HFSTDataDecoder(),
-        engine=engine,
-    )
+
+__all__ = ["HFSTMorph", "HFSTRawResult", "build_default_hfst_morph"]

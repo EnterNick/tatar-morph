@@ -2,16 +2,12 @@ from collections.abc import Iterable
 import re
 
 from tatar_morph.decoder.hfst.known import KNOWN_SYMBOLS_MAPPER
-from tatar_morph.decoder.interface import EngineData
-from tatar_morph.models import ParsingResults, Analysis
+from tatar_morph.models import Analysis, GenerationResult, ParsingResults
 
 TAG_RE = re.compile(r"<([^<>]+)>")
 
 
 class HFSTDataDecoder:
-    def parse_list(self, data: Iterable[tuple[str, float]]) -> Iterable[EngineData]:
-        return map(self._parse, data)
-
     def parse_features(
         self, data: tuple[str, float]
     ) -> tuple[ParsingResults, tuple[str, ...]]:
@@ -21,7 +17,7 @@ class HFSTDataDecoder:
             feature for feature in features if feature is not None
         ), raw_tags
 
-    def generate(self, lemma: str, tags: Iterable[str]) -> str:
+    def encode_generation(self, lemma: str, tags: Iterable[str]) -> str:
         tags = tuple(tags)
         if not tags:
             raise ValueError("At least one morphology tag is required")
@@ -32,22 +28,18 @@ class HFSTDataDecoder:
         return data[0].split("<", maxsplit=1)[0]
 
     def decode(self, word: str, data: tuple[str, float]) -> Analysis:
-        encoded = self._parse(data)
         features, raw_tags = self.parse_features(data)
         lemma = self.lemmatize(data)
         return Analysis(
             word=word,
-            weight=encoded.weight,
+            weight=data[1],
             features=features,
             raw_tags=raw_tags,
             lemma=lemma,
         )
 
+    def decode_generation(self, data: tuple[str, float]) -> GenerationResult:
+        return GenerationResult(word=data[0], weight=data[1])
+
     def _parse_tags(self, string: str) -> tuple[str, ...]:
         return tuple(TAG_RE.findall(string))
-
-    def _parse(self, data: tuple[str, float]) -> EngineData:
-        return EngineData(
-            word=data[0],
-            weight=data[1],
-        )
